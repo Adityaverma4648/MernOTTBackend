@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
-const passport = require('passport')
+const cors = require('cors');
 
 //  config Files
 const connectDB = require('./config/DB');
@@ -17,6 +17,19 @@ const app = express();
 app.use(express.json()); // to accept json data
 app.use(express.urlencoded({extended:false}));
 
+//  to make axios work
+app.use(cors());
+app.use(cors({
+  origin : ['http://localhost:3000/', 'http://localhost:7000/' ] 
+}));
+
+app.use(cors({
+  methods: ['GET', 'POST', 'PUT', 'DELETE'] // Add other allowed methods as needed
+}));
+
+app.use(cors({
+  allowedHeaders: ['Authorization', 'Content-Type'] // Add your custom headers
+}));
 
 // cookies and session 
 app.use(cookieParser())

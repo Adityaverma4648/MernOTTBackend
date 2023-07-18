@@ -2,10 +2,20 @@ const express = require('express');
 const passport = require('passport');
 const User = require('../Model/User');
 const generateToken = require('../config/JWT');
-
+const jwt = require('jsonwebtoken');
 // app instance 
 const router = express.Router();
 
+const verifyToken = (req, res, next) => {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+  if (token == null) return res.sendStatus(403);
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+  if (err) return res.sendStatus(404);
+  req.user = user;
+  next();
+  });
+}
 
 router.post("/register" , async (req , res)=>{  
     const {userName, email, password} = req.body;
@@ -41,8 +51,7 @@ router.post("/login",(async (req, res) => {
   if (user && (await user.matchPassword(password))) {
     const token  = generateToken(user._id);
     const userData  = await User.find({email});
-    console.log(userData , token);
-    res.status(200).json({userData , token});
+    res.status(200).send({token});
   } else {
     res.status(400).json('Something broke - User Not Found');
   }
@@ -51,9 +60,16 @@ router.post("/login",(async (req, res) => {
 
 
 
-router.get('/logout', (req, res) => {
-  req.logout()
-  res.redirect('/')
+router.put('/logout', verifyToken ,(req, res) => {
+  const authHeader = req.headers["authorization"];
+  jwt.sign(authHeader, "", { expiresIn: 1 }, (logout, err) => {
+    if (logout) {
+      res.send({ status : "success" });
+    } else {
+      res.send({ status : "error" });
+    }
+  });
+
 })
 
 //  google auth
