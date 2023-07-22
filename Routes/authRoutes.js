@@ -49,8 +49,7 @@ router.post("/login",(async (req, res) => {
   const user = await User.findOne({ email });
   console.log(user);
   if (user && (await user.matchPassword(password))) {
-    const token  = generateToken(user._id);
-    const userData  = await User.find({email});
+    const token  = generateToken(user);
     res.status(200).send({token});
   } else {
     res.status(400).json('Something broke - User Not Found');

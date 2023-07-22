@@ -3,6 +3,7 @@ const express = require('express');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const cors = require('cors');
+const bodyParser = require("body-parser")
 
 //  config Files
 const connectDB = require('./config/DB');
@@ -15,7 +16,11 @@ const crudRoutes = require('./Routes/crudRoutes');
 // express instance
 const app = express();
 app.use(express.json()); // to accept json data
-app.use(express.urlencoded({extended:false}));
+app.use(express.urlencoded({extended:true}));
+
+app.use(bodyParser.json()); // to accept json data
+app.use(bodyParser.urlencoded({extended:true}));
+
 
 //  to make axios work
 app.use(cors());
