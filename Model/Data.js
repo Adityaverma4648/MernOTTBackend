@@ -1,0 +1,45 @@
+const mongoose = require('mongoose');
+
+const dataSchema = new mongoose.Schema({
+  title : {
+      type : String,
+      required : true
+  },
+  caption : {
+      type : String,
+      required : true
+  }, 
+  fileUrl : {
+      type : String,
+      required : true
+  },
+  likes: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  comments: [{
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    content: {
+      type: String,
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  createdBy : {
+     type : Array,
+  },
+  tags:{
+    type : Array,
+  }
+},
+{
+     timestamps: true,
+}
+)
+
+module.exports= mongoose.model("data",dataSchema);

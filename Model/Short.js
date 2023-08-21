@@ -31,7 +31,10 @@ const shortSchema = new mongoose.Schema({
     }
   }],
   createdBy : {
-     type : String,
+     type : Array,
+  },
+  tags:{
+    type : Array,
   }
 },
 {

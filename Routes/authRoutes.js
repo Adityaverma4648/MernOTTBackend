@@ -9,24 +9,36 @@ const router = express.Router();
 const verifyToken = (req, res, next) => {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
-  if (token == null) return res.sendStatus(403);
+  if (token == null) return res.status(400).send("Token Is null");
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
   if (err) return res.sendStatus(404);
   req.user = user;
   next();
   });
 }
+router.post("/getUserDetails", verifyToken ,async(req,res)=>{
+  console.log(req);
+  const {token} = req.body;
+  if (token == null) return res.status(400).send("Token Is null");
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+  if (err) return res.sendStatus(404);
+  req.user = user;
+  res.status(200).json(req.user);
+   })
+});
 
 router.post("/register" , async (req , res)=>{  
     const {userName, email, password} = req.body;
+
+    console.log(req.body);
     
     if(!userName || !email || !password){
-        res.status(400).json("Fill all the entries!");
+        res.status(400).json({message : "Fill all the entries!"});
     }
     const userExists = await User.findOne({ email });
 
     if (userExists) {
-      res.status(400).json("User Already Exists!");
+      res.status(400).json({message : "UserEmail Already Exists!"});
     }
     const user = await User.create({
         userName,
@@ -35,10 +47,10 @@ router.post("/register" , async (req , res)=>{
       });
     
       if (user) {
-        res.status(201).redirect('login');
+        res.status(200).json({message : "successfully registered!"});
         //  redirected on login 
       } else {
-        res.status(400).json("User Not Found")
+        res.status(400).json({message : "Server Error"});
       }
 
 });
@@ -50,37 +62,27 @@ router.post("/login",(async (req, res) => {
   console.log(user);
   if (user && (await user.matchPassword(password))) {
     const token  = generateToken(user);
-    res.status(200).send({token});
+    res.status(200).json({token : token , user : user});
+  }else if(user && !(await user.matchPassword(password))){
+      res.status(400).json("Incorrect password!")
   } else {
-    res.status(400).json('Something broke - User Not Found');
+    res.status(400).json('User not found:Please register yourself first or try another email');
   }
 }))
 
-
-
-
-router.put('/logout', verifyToken ,(req, res) => {
-  const authHeader = req.headers["authorization"];
-  jwt.sign(authHeader, "", { expiresIn: 1 }, (logout, err) => {
+router.post('/logout', verifyToken ,(req, res) => {
+    const {token} = req.body ;
+   jwt.sign(token, process.env.JWT_SECRET, { expiresIn: 1 }, (logout, err) => {
     if (logout) {
-      res.send({ status : "success" });
-    } else {
-      res.send({ status : "error" });
+      res.status(200).json({status : "OK", message : "Successfully LoggedOut!" });
+    } else if(err) {
+      res.status(400).json("Something went Wrong")
     }
   });
 
 })
 
-//  google auth
-router.get('/google', passport.authenticate('google', { scope: ['profile','email'] }))
 
-router.get(
-  '/google/callback',
-  passport.authenticate('google', { failureRedirect: '/' }),
-  (req, res) => {
-    res.redirect('/log')
-  }
-)
 
 
 

@@ -4,54 +4,97 @@ const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const cors = require('cors');
 const bodyParser = require("body-parser")
+const multer = require('multer');
+const jwt = require('jsonwebtoken');
+
+//  importing coloudinary
+const cloudinary = require('./cloudinary/index');
+
+//  importing models
+const Short = require('./Model/Short');
 
 //  config Files
 const connectDB = require('./config/DB');
 
 //  importing Routes
 const authRoutes  = require('./Routes/authRoutes');
-const crudRoutes = require('./Routes/crudRoutes');
-
 
 // express instance
 const app = express();
 app.use(express.json()); // to accept json data
-app.use(express.urlencoded({extended:true}));
-
-app.use(bodyParser.json()); // to accept json data
-app.use(bodyParser.urlencoded({extended:true}));
-
+app.use(express.urlencoded({extended:false}));
 
 //  to make axios work
 app.use(cors());
 app.use(cors({
-  origin : ['http://localhost:3000/', 'http://localhost:7000/' ] 
+  origin : ['http://localhost:3000/', 'http://localhost:7000/' ]
 }));
+
+app.use(cors({ methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH' , 'HEAD']}))
 
 app.use(cors({
-  methods: ['GET', 'POST', 'PUT', 'DELETE'] // Add other allowed methods as needed
-}));
-
-app.use(cors({
-  allowedHeaders: ['Authorization', 'Content-Type'] // Add your custom headers
-}));
-
-// cookies and session 
-app.use(cookieParser())
-// Session Setup
-app.use(session({
-  secret: process.env.SESSION_SECRET,
-  resave: true,
-  saveUninitialized: true,
-  cookie : {  },
+  allowedHeaders: ['Authorization', 'Content-Type']
 }))
+
+const storage  = multer.diskStorage({
+  destination : (req, file, callback)=>{
+     callback(null, "/Uploads" )},
+  filename: (req , file , callback) =>{
+     callback(null , file.fieldname+ '-' + Date.now() + file.originalname);
+  }
+})
+
+const upload = multer({storage : storage});
+
+//  multer ends here
+
+const verifyToken = (req, res, next) => {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+  if (token == null) return res.status(401).json("Token Is Null");
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+  if (err) return res.status(400).json("Couldnot Verify");
+  req.user = user;
+  next();
+  });
+}
 
 app.get("/",(req , res)=>{
   res.status(200).send("Hello world");
 })
 
 app.use("/auth" , authRoutes);
-app.use("/crud" , crudRoutes);
+
+app.post('shorts/add' , verifyToken  , async (req , res)=>{
+   const {title, caption , fileUrl} = req.body; 
+   
+   //  getting userdata from token
+
+   const authHeader = req.headers['authorization']
+   const token = authHeader && authHeader.split(" ")[1];
+   const decoded = jwt.decode(token);
+   const createdBy = [decoded];
+
+   if(!title || !caption || !fileUrl ){
+       res.status(400).json("Request was incomplete!");
+   }
+   // const newShorts = await Short.create({
+   //    title,
+   //    caption,
+   //    fileUrl,
+   //    createdBy : [createdBy[0].data]
+   // });
+   // if(newShorts){
+   //    res.status(200).json("Shorts succesfully added!");
+   // }else{
+   //    res.status(400).json("Something Broke Down!");
+
+   // }
+   
+});
+
+
+
 
 
 const start = async ()=>{
