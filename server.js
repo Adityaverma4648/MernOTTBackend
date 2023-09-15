@@ -26,9 +26,7 @@ app.use(express.urlencoded({extended:false}));
 
 //  to make axios work
 app.use(cors());
-app.use(cors({
-  origin : ['http://localhost:3000/', 'http://localhost:7000/' ]
-}));
+app.use(cors());
 
 app.use(cors({ methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH' , 'HEAD']}))
 

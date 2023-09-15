@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 // app instance 
 const router = express.Router();
 
+
 const verifyToken = (req, res, next) => {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
@@ -64,9 +65,9 @@ router.post("/login",(async (req, res) => {
     const token  = generateToken(user);
     res.status(200).json({token : token , user : user});
   }else if(user && !(await user.matchPassword(password))){
-      res.status(400).json("Incorrect password!")
+      res.status(400).json({message : "Incorrect password!"})
   } else {
-    res.status(400).json('User not found:Please register yourself first or try another email');
+    res.status(400).json({message : 'User not found:Please register yourself first or try another email'});
   }
 }))
 
@@ -74,9 +75,9 @@ router.post('/logout', verifyToken ,(req, res) => {
     const {token} = req.body ;
    jwt.sign(token, process.env.JWT_SECRET, { expiresIn: 1 }, (logout, err) => {
     if (logout) {
-      res.status(200).json({status : "OK", message : "Successfully LoggedOut!" });
+      res.status(200).json({message : "Successfully LoggedOut!" });
     } else if(err) {
-      res.status(400).json("Something went Wrong")
+      res.status(400).json({message : "Something went Wrong"})
     }
   });
 
